@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect,url_for ,request ,Response ,jsonify
+from flask import Flask, render_template, redirect,url_for ,request ,Response ,jsonify , flash
 from wtforms import Form, StringField, PasswordField, EmailField, validators
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
@@ -11,6 +11,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////Users/furkan/Desktop/GithubP
 db.init_app(app)
 
 jwt = JWTManager(app)
+
+app.secret_key = "blog"
 app.config["JWT_SECRET_KEY"] = "scret-key" 
 
 class User(db.Model):
@@ -52,7 +54,9 @@ def register():
         user = User(username=username,email=email,password=password)
         db.session.add(user)
         db.session.commit()
-        return redirect(url_for("index")) , 201
+
+        flash("Account succesfully created","success")
+        return redirect(url_for("index"))
     else:
         return render_template("register.html", form=form)
 
@@ -65,7 +69,10 @@ def login():
         result = User.query.filter_by(username=username).first()
         if result:
             if sha256_crypt.verify(password,result.password):
-                return redirect(url_for("index")) , 200
+                flash("Account succesfully","success")
+                return redirect(url_for("index"))
+        flash("Not found account","danger")
+        return redirect(url_for("login"))
     else:
         return render_template("login.html",form=form)
         
