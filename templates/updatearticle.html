@@ -1,0 +1,9 @@
+{% extends 'template.html' %}
+{% from 'includes/form_helpers.html' import render_field%}
+{% block  body%}
+<form method="post">
+    {{render_field(form.title,class="form-control")}}
+    {{render_field(form.content,class="form-control")}}
+    <button type="submit" class = "btn btn-dark">Submit</button>
+</form>
+{% endblock %}

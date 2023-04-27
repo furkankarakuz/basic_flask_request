@@ -31,7 +31,7 @@ class User(db.Model,UserMixin):
 
 class Article(db.Model):
     article_id = db.Column(db.Integer , primary_key = True)
-    username = db.Column(db.String , unique=True , nullable = False )
+    username = db.Column(db.String , nullable = False )
     title = db.Column(db.String)
     content = db.Column(db.String)
     created_date = db.Column(db.String , default = datetime.now().strftime("%d.%m.%Y %H:%M:%S") )
@@ -49,7 +49,7 @@ class LoginForm(Form):
     username = StringField("username")
     password = PasswordField("password")
 
-class AddArticleForm(Form):
+class ArticleForm(Form):
     title = StringField("Title")
     content = TextAreaField("Content")
 
@@ -133,7 +133,7 @@ def dashboard():
 @login_required
 @app.route("/addarticle",methods=["GET","POST"])
 def addarticle():
-    form = AddArticleForm(request.form)
+    form = ArticleForm(request.form)
     title = form.title.data
     content = form.content.data
     username = session["username"]
@@ -147,7 +147,44 @@ def addarticle():
         return redirect(url_for("dashboard"))
     else:
         return render_template("addarticle.html",form=form)
-    
+
+
+@app.route("/article-detail/<string:id>")
+def articledetail(id):
+    article = Article.query.filter_by(article_id=id).first()
+    if article:
+        return render_template("articledetail.html",article=article)
+
+@app.route("/delete-article/<string:id>")
+def deletearticle(id):
+    article = Article.query.filter_by(article_id=id).first()
+    if article:
+        db.session.delete(article)
+        db.session.commit()
+    return redirect(url_for("dashboard"))
+
+@app.route("/update-article/<string:id>",methods=["GET","POST"])
+def updatearticle(id):
+    if request.method=="GET":
+        article = Article.query.filter_by(article_id=id).first()
+        if article:
+            form = ArticleForm()
+            form.title.data = article.title
+            form.content.data = article.content
+
+            return render_template("updatearticle.html",form=form)
+    else:
+        form = ArticleForm(request.form)
+        title = form.title.data
+        content = form.content.data
+
+        article = Article.query.filter_by(article_id=id).first()
+        article.title = title
+        article.content = content
+        db.session.commit()
+
+        return redirect(url_for("dashboard"))
+        
 
 @app.route("/logout")
 def logout():

@@ -8,22 +8,25 @@
         <table class="table">
             <thead class="thead-dark">
             <tr>
-                <th scope="col">#Article ID</th>
+                <th scope="col">#ID</th>
                 <th scope="col">Title</th>
                 <th scope="col">Username</th>
                 <th scope="col">Created Date</th>
+                <th scope="col"></th>
+                <th scope="col"></th>
             </tr>
             </thead>
             <tbody>
                 {% for article in articles %}
                     <tr>
                         <th scope="row">{{article.article_id}}</th>
-                        <td>{{article.title}}</td>
+                        <td><a href="/article-detail/{{article.article_id}}">{{article.title}}</a></td>
                         <td>{{article.username}}</td>
                         <td>{{article.created_date}}</td>
+                        <td><a href="/update-article/{{article.article_id}}"><button class="btn btn-dark">Update</button></a></td>
+                        <td><a href="/delete-article/{{article.article_id}}"><button class="btn btn-dark">Delete</button></a></td>
                     </tr>
                 {% endfor %}
-            
             </tbody>
         </table>
     {% endif %}

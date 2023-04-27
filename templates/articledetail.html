@@ -1,0 +1,13 @@
+{% extends 'template.html' %}
+
+{% block body %}
+    {% if article %}
+        <h1>{{article.title}}</h1>
+        <hr>
+        <p>Username : {{article.username}}</p>
+        <hr>
+        <p>Created Date : {{article.created_date}}</p>
+        <hr>
+        <p>{{article.content|safe}}</p>
+    {% endif %}
+{% endblock  %}
