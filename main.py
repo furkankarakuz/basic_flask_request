@@ -1,10 +1,12 @@
 from flask import Flask, render_template, redirect,url_for ,request ,Response  , flash , session
-from wtforms import Form, StringField, PasswordField, EmailField, validators
+from wtforms import Form, TextAreaField, StringField, PasswordField, EmailField, validators
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
 from flask_jwt_extended import JWTManager
 from flask_login import LoginManager,login_required,login_user,UserMixin,logout_user,current_user
 from datetime import datetime
+from functools import wraps
+
 
 app = Flask(__name__)
 
@@ -18,7 +20,8 @@ db.init_app(app)
 jwt = JWTManager(app)
 
 app.secret_key = "blog"
-app.config["JWT_SECRET_KEY"] = "scret-key" 
+app.config["JWT_SECRET_KEY"] = "scret-key"
+
 
 class User(db.Model,UserMixin):
     id = db.Column(db.Integer, primary_key = True)
@@ -33,6 +36,7 @@ class Article(db.Model):
     content = db.Column(db.String)
     created_date = db.Column(db.String , default = datetime.now().strftime("%d.%m.%Y %H:%M:%S") )
 
+
 class RegisterForm(Form):
     username = StringField("username", validators=[validators.Length(validators.Length(min=4, max=25))])
     email = EmailField("email", validators=[validators.Email(message="Please , write email type")])
@@ -41,15 +45,23 @@ class RegisterForm(Form):
         validators.EqualTo("confirm",message="Test")])
     confirm = PasswordField("Confirm Password")
 
-
 class LoginForm(Form):
     username = StringField("username")
     password = PasswordField("password")
 
+class AddArticleForm(Form):
+    title = StringField("Title")
+    content = TextAreaField("Content")
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    flash("Login","danger")
+    return redirect(url_for("login"))
+
 
 
 def is_authenticated(self):
@@ -57,7 +69,11 @@ def is_authenticated(self):
 
 @app.route("/",methods=["GET"])
 def index():
-    return render_template("index.html")
+    if "username" in session:
+        user = session["username"]
+    else:
+        user=None
+    return render_template("index.html",user=user)
 
 
 with app.app_context():
@@ -93,6 +109,7 @@ def login():
             if result:
                 if sha256_crypt.verify(password,result.password):
                     login_user(result, remember=True)
+                    session["username"] = username
                     flash("Account succesfully","success")
                     return redirect(url_for("index"))
             flash("Not found account","danger")
@@ -102,13 +119,39 @@ def login():
     else:
         return redirect(url_for("index"))
        
-@app.route("/dashboard")
+@app.route("/dashboard",methods=["GET","POST"])
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    if request.method=="POST":
+        return redirect(url_for("addarticle"))
+    else:
+        articles = Article.query.filter_by(username=session["username"]).all()
+        if articles:
+            return render_template("dashboard.html",articles=articles)
+        else:
+            return render_template("dashboard.html")
+@login_required
+@app.route("/addarticle",methods=["GET","POST"])
+def addarticle():
+    form = AddArticleForm(request.form)
+    title = form.title.data
+    content = form.content.data
+    username = session["username"]
+    if request.method=="POST":
+        now = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        article = Article (title=title,content=content,username=username,created_date=now)
+        db.session.add(article)
+        db.session.commit()
+
+        flash("Success , added new article","success")
+        return redirect(url_for("dashboard"))
+    else:
+        return render_template("addarticle.html",form=form)
+    
 
 @app.route("/logout")
 def logout():
+    session.clear()
     logout_user()
     return redirect(url_for("login"))
 
