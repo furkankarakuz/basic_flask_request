@@ -1,10 +1,15 @@
-from flask import Flask, render_template, redirect,url_for ,request ,Response ,jsonify , flash
+from flask import Flask, render_template, redirect,url_for ,request ,Response  , flash , session
 from wtforms import Form, StringField, PasswordField, EmailField, validators
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+from flask_jwt_extended import JWTManager
+from flask_login import LoginManager,login_required,login_user,UserMixin,logout_user,current_user
+from datetime import datetime
 
 app = Flask(__name__)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 db = SQLAlchemy()
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////Users/furkan/Desktop/GithubProjects/basic_flask_request/database.db"
@@ -15,25 +20,40 @@ jwt = JWTManager(app)
 app.secret_key = "blog"
 app.config["JWT_SECRET_KEY"] = "scret-key" 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique=True, nullable=False)
+class User(db.Model,UserMixin):
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String, unique = True, nullable = False)
     email = db.Column(db.String)
     password = db.Column(db.String)
 
+class Article(db.Model):
+    article_id = db.Column(db.Integer , primary_key = True)
+    username = db.Column(db.String , unique=True , nullable = False )
+    title = db.Column(db.String)
+    content = db.Column(db.String)
+    created_date = db.Column(db.String , default = datetime.now().strftime("%d.%m.%Y %H:%M:%S") )
 
 class RegisterForm(Form):
     username = StringField("username", validators=[validators.Length(validators.Length(min=4, max=25))])
     email = EmailField("email", validators=[validators.Email(message="Please , write email type")])
-    password = PasswordField("password", validators=[validators.Length(min=5, max=15),
-                                                     validators.DataRequired(message="Not null"),
-                                                     validators.EqualTo(fieldname="confirm_password",message="Test")])
-    confirm_password = PasswordField("confirm_password")
+    password = PasswordField("Password",validators=[
+        validators.DataRequired(message="Testaaa"),
+        validators.EqualTo("confirm",message="Test")])
+    confirm = PasswordField("Confirm Password")
 
 
 class LoginForm(Form):
     username = StringField("username")
     password = PasswordField("password")
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+
+def is_authenticated(self):
+    return self.is_authenticated
 
 @app.route("/",methods=["GET"])
 def index():
@@ -42,6 +62,7 @@ def index():
 
 with app.app_context():
     db.create_all()
+
 
 @app.route("/register",methods=["GET","POST"])
 def register():
@@ -60,23 +81,36 @@ def register():
     else:
         return render_template("register.html", form=form)
 
+
 @app.route("/login",methods=["GET","POST"])
 def login():
-    form = LoginForm(request.form)
-    if request.method == "POST":
-        username = form.username.data
-        password = form.password.data
-        result = User.query.filter_by(username=username).first()
-        if result:
-            if sha256_crypt.verify(password,result.password):
-                flash("Account succesfully","success")
-                return redirect(url_for("index"))
-        flash("Not found account","danger")
-        return redirect(url_for("login"))
+    if not current_user.is_authenticated:
+        form = LoginForm(request.form)
+        if request.method == "POST":
+            username = form.username.data
+            password = form.password.data
+            result = User.query.filter_by(username=username).first()
+            if result:
+                if sha256_crypt.verify(password,result.password):
+                    login_user(result, remember=True)
+                    flash("Account succesfully","success")
+                    return redirect(url_for("index"))
+            flash("Not found account","danger")
+            return redirect(url_for("login"))
+        else:
+            return render_template("login.html",form=form)
     else:
-        return render_template("login.html",form=form)
-        
+        return redirect(url_for("index"))
+       
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html")
 
+@app.route("/logout")
+def logout():
+    logout_user()
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
     app.run(debug=True)
