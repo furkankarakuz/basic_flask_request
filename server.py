@@ -309,7 +309,7 @@ def article_detail_request(id):
 
 
 @login_required
-@app.route("/delete-article/request/<string:id>", methods=["POST"])
+@app.route("/delete-article/request/<string:id>", methods=["DELETE"])
 def delete_article_request(id):
     try:
         article = Article.query.filter_by(article_id=id,username=session["username"]).first()
