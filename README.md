@@ -64,7 +64,9 @@ user = RequestProcess(username, email, password)
 <img width="688" alt="image5" src="https://user-images.githubusercontent.com/24435617/236055880-9a4b9da7-8041-4c92-becc-839576cfc042.png">
 
 ##### Request Type:
-<pre>user.login_request()</pre>
+<pre>
+user.login_request()
+</pre>
 
 <br>
 <br>
@@ -77,6 +79,12 @@ user = RequestProcess(username, email, password)
 <img width="688" alt="image7" src="https://user-images.githubusercontent.com/24435617/236056566-ca7ed43e-4a15-4f28-9371-676ce498e99f.png">
 
 ##### Request Type:
+<pre>
+title = "Test Title"
+content = "Test Content\nTest Content\nTest Content\nTest Content\nTest Content"
+user.add_article_request(title=title, content=content)
+</pre>
+
 
 <br>
 <br>
@@ -86,9 +94,25 @@ user = RequestProcess(username, email, password)
 <hr>
 
 ##### Web Type
-<img width="688" alt="image" src="https://user-images.githubusercontent.com/24435617/236056755-8b30b07e-9e5d-4934-bd29-f109b72f9b1e.png">
+<img width="688" alt="image6" src="https://user-images.githubusercontent.com/24435617/236056755-8b30b07e-9e5d-4934-bd29-f109b72f9b1e.png">
 
 ##### Request Type:
+<pre>
+user.dashboard_request()
+</pre>
+
+##### Result:
+<pre>
+{
+  "data": {
+    "1": {
+      "Created Date": "03.05.2023 23:53:53",
+      "Title": "Test Title"
+    }
+  },
+  "message": "Success Get Articles"
+}
+</pre>
 
 <br>
 <br>
@@ -101,3 +125,20 @@ user = RequestProcess(username, email, password)
 <img width="691" alt="resim9" src="https://user-images.githubusercontent.com/24435617/236057553-b9c516d4-0faa-42bd-a45b-185d3287a855.png">
 
 ##### Request Type:
+<pre>
+article_id = 1
+user.article_detail_request(article_id=article_id)
+</pre>
+
+##### Request Result #####
+<pre>
+{
+  "message": {
+    "1": {
+      "Content": "<p>Test Content</p>\r\n\r\n<p>Test Content</p>\r\n\r\n<p>Test Content</p>\r\n\r\n<p>Test Content</p>\r\n\r\n<p>Test Content</p>\r\n",
+      "Created Date": "03.05.2023 23:53:53",
+      "Title": "Test Title"
+    }
+  }
+}
+</pre>
